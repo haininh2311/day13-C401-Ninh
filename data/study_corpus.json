@@ -1,0 +1,152 @@
+[
+  {
+    "id": "algo-001",
+    "topic": "algorithm",
+    "title": "Big O Notation",
+    "content": "Big O notation describes the upper bound of an algorithm's time or space complexity as input size grows. Common complexities: O(1) constant, O(log n) logarithmic, O(n) linear, O(n log n) linearithmic, O(n²) quadratic, O(2^n) exponential. Big O ignores constants and lower-order terms, focusing on the dominant growth factor. It helps compare algorithms independently of hardware."
+  },
+  {
+    "id": "algo-002",
+    "topic": "algorithm",
+    "title": "Binary Search",
+    "content": "Binary search finds a target in a sorted array by repeatedly halving the search space. It compares the target to the middle element: if equal, done; if less, search left half; if greater, search right half. Time complexity O(log n), space O(1) iteratively. Requires sorted input. Much faster than linear search O(n) for large datasets."
+  },
+  {
+    "id": "algo-003",
+    "topic": "algorithm",
+    "title": "Sorting Algorithms",
+    "content": "QuickSort: average O(n log n), worst O(n²) with poor pivot choice. Uses divide-and-conquer with an in-place partition. MergeSort: always O(n log n), stable, needs O(n) extra space. HeapSort: O(n log n), in-place but not stable. For small arrays, insertion sort O(n²) can outperform due to low overhead. Python's TimSort combines merge and insertion sort."
+  },
+  {
+    "id": "algo-004",
+    "topic": "algorithm",
+    "title": "Recursion",
+    "content": "Recursion solves problems by having a function call itself with a smaller subproblem until reaching a base case. Every recursive solution has a base case (terminates) and a recursive case (reduces). The call stack grows with each call; deep recursion can cause stack overflow. Tail recursion can be optimized by compilers to avoid stack growth. Fibonacci, factorial, and tree traversals are classic examples."
+  },
+  {
+    "id": "algo-005",
+    "topic": "algorithm",
+    "title": "Dynamic Programming",
+    "content": "Dynamic programming (DP) solves optimization problems by breaking them into overlapping subproblems and storing results (memoization/tabulation). Top-down DP uses recursion + memoization cache. Bottom-up DP fills a table iteratively. Key insight: optimal substructure and overlapping subproblems. Classic problems: Fibonacci, knapsack, longest common subsequence, shortest path. Reduces exponential brute-force to polynomial time."
+  },
+  {
+    "id": "ds-001",
+    "topic": "data_structure",
+    "title": "Arrays and Lists",
+    "content": "Arrays store elements in contiguous memory; O(1) random access by index, O(n) insertion/deletion in middle. Dynamic arrays (Python list, Java ArrayList) resize automatically, amortized O(1) append. Linked lists have O(1) insert/delete at known node but O(n) access. Doubly linked lists allow backward traversal. Arrays are cache-friendly; linked lists have pointer overhead."
+  },
+  {
+    "id": "ds-002",
+    "topic": "data_structure",
+    "title": "Binary Search Tree",
+    "content": "A Binary Search Tree (BST) maintains ordering: left subtree values < node < right subtree values. Search, insert, delete: O(h) where h is height. Balanced BST (AVL, Red-Black): h = O(log n), ensuring O(log n) operations. Unbalanced worst case O(n). In-order traversal yields sorted sequence. Used for ordered sets, maps, and range queries."
+  },
+  {
+    "id": "ds-003",
+    "topic": "data_structure",
+    "title": "Hash Tables",
+    "content": "Hash tables map keys to values using a hash function. Average O(1) for insert, lookup, delete. Collisions handled by chaining (linked lists at each bucket) or open addressing (probe for next slot). Load factor = n/m (items/buckets); resize when > 0.7. Python dict uses open addressing with pseudo-random probing. Worst case O(n) with many collisions."
+  },
+  {
+    "id": "ds-004",
+    "topic": "data_structure",
+    "title": "Stack and Queue",
+    "content": "Stack (LIFO): push/pop from top. Used for function call stack, undo operations, expression parsing, DFS. Queue (FIFO): enqueue at rear, dequeue from front. Used for BFS, task scheduling, buffering. Deque supports O(1) operations at both ends. Priority queue (heap-based): dequeue returns min/max element. Python collections.deque is an efficient double-ended queue."
+  },
+  {
+    "id": "ds-005",
+    "topic": "data_structure",
+    "title": "Graph Representation",
+    "content": "Graphs consist of vertices and edges. Adjacency matrix: O(V²) space, O(1) edge lookup, good for dense graphs. Adjacency list: O(V+E) space, O(degree) edge lookup, good for sparse graphs. BFS uses a queue, explores level by level, finds shortest path in unweighted graphs. DFS uses a stack (or recursion), explores as deep as possible. BFS time O(V+E), space O(V). Both visit all vertices once."
+  },
+  {
+    "id": "os-001",
+    "topic": "os",
+    "title": "Processes and Threads",
+    "content": "A process is an independent program in execution with its own memory space. Threads share the same process memory, enabling faster communication but requiring synchronization. Context switching between processes is expensive (save/restore full state). Thread context switch is cheaper. Multiprocessing avoids GIL in Python, multithread shares memory. Processes isolate faults; thread crash can kill the process."
+  },
+  {
+    "id": "os-002",
+    "topic": "os",
+    "title": "Deadlock",
+    "content": "Deadlock occurs when processes wait for each other's resources indefinitely. Four Coffman conditions: mutual exclusion, hold and wait, no preemption, circular wait. Prevention: break one condition (e.g., resource ordering). Detection: resource allocation graph, banker's algorithm. Avoidance: allocate only if safe state maintained. Recovery: kill process or preempt resource. Common in database transactions and concurrent systems."
+  },
+  {
+    "id": "os-003",
+    "topic": "os",
+    "title": "CPU Scheduling",
+    "content": "CPU scheduling selects which process runs next. FCFS (First-Come-First-Served): simple, can cause convoy effect. SJF (Shortest Job First): optimal average wait, needs burst time prediction. Round Robin: time quantum slices, preemptive, good for interactive. Priority scheduling: starvation possible; solved by aging. MLFQ (Multi-Level Feedback Queue): used in real OSes, balances responsiveness and throughput."
+  },
+  {
+    "id": "os-004",
+    "topic": "os",
+    "title": "Memory Management",
+    "content": "Virtual memory provides each process an isolated address space, larger than physical RAM. Pages (typically 4KB) map to frames via page table. Page fault triggers OS to load page from disk (swap). TLB caches recent translations for fast access. Segmentation groups related memory (code, stack, heap). Garbage collection (Python, Java) automatically frees heap memory using reference counting or mark-and-sweep."
+  },
+  {
+    "id": "net-001",
+    "topic": "network",
+    "title": "TCP vs UDP",
+    "content": "TCP (Transmission Control Protocol): connection-oriented, reliable, ordered delivery, flow/congestion control. Three-way handshake (SYN, SYN-ACK, ACK). Used for HTTP, email, file transfer. UDP (User Datagram Protocol): connectionless, unreliable, faster. Used for video streaming, DNS, VoIP where speed > reliability. TCP adds ~20 bytes header overhead; UDP ~8 bytes. UDP can broadcast/multicast; TCP is unicast."
+  },
+  {
+    "id": "net-002",
+    "topic": "network",
+    "title": "HTTP and REST",
+    "content": "HTTP (HyperText Transfer Protocol) is stateless request-response protocol. Methods: GET (retrieve), POST (create), PUT (replace), PATCH (update), DELETE. Status codes: 2xx success, 3xx redirect, 4xx client error, 5xx server error. REST (Representational State Transfer) uses HTTP for resource-based APIs. HTTPS adds TLS encryption. HTTP/2 multiplexes requests over one connection. HTTP/3 uses QUIC over UDP."
+  },
+  {
+    "id": "net-003",
+    "topic": "network",
+    "title": "DNS",
+    "content": "DNS (Domain Name System) translates domain names to IP addresses. Hierarchical: root → TLD (.com) → authoritative nameserver. Resolution: client queries recursive resolver, which queries root, TLD, then authoritative. Results cached with TTL. Record types: A (IPv4), AAAA (IPv6), CNAME (alias), MX (mail), TXT (verification). DNS over HTTPS (DoH) encrypts queries. Propagation delay when TTL expires."
+  },
+  {
+    "id": "ml-001",
+    "topic": "ml",
+    "title": "Gradient Descent",
+    "content": "Gradient descent minimizes a loss function by iteratively moving in the direction of steepest descent (negative gradient). Learning rate controls step size: too large → diverge, too small → slow. Batch GD uses all data per step, SGD uses one sample (noisy but fast), Mini-batch GD is a compromise. Adam optimizer adapts learning rate per parameter. Converges to local minimum (global for convex loss)."
+  },
+  {
+    "id": "ml-002",
+    "topic": "ml",
+    "title": "Overfitting and Regularization",
+    "content": "Overfitting occurs when a model memorizes training data but fails on new data (high variance). Causes: too complex model, too little data. Solutions: L1/L2 regularization (penalize large weights), dropout (randomly zero neurons during training), early stopping, data augmentation. Underfitting (high bias) = model too simple. Bias-variance tradeoff: reducing one increases the other. Cross-validation estimates generalization."
+  },
+  {
+    "id": "ml-003",
+    "topic": "ml",
+    "title": "Classification",
+    "content": "Classification predicts discrete categories. Logistic regression: sigmoid output, works well for linearly separable data. Decision trees: split features to maximize information gain, interpretable. Random forests: ensemble of trees, reduces variance. SVM: finds maximum-margin hyperplane. Neural networks: stack of linear transformations + nonlinear activations. Evaluation: accuracy, precision, recall, F1 score, AUC-ROC."
+  },
+  {
+    "id": "db-001",
+    "topic": "database",
+    "title": "SQL Indexes",
+    "content": "Indexes speed up queries by creating a data structure (usually B-tree) for fast lookup. Without index: full table scan O(n). With B-tree index: O(log n). Primary key always indexed. Create index on frequently filtered/sorted columns. Too many indexes slow writes (insert/update/delete must update all indexes). Composite indexes: (col1, col2) satisfies queries on col1 or (col1, col2) but not col2 alone."
+  },
+  {
+    "id": "db-002",
+    "topic": "database",
+    "title": "ACID Transactions",
+    "content": "ACID properties ensure database reliability. Atomicity: transaction is all-or-nothing. Consistency: database remains valid (constraints satisfied). Isolation: concurrent transactions don't interfere (levels: read uncommitted, read committed, repeatable read, serializable). Durability: committed data survives crashes (WAL log). NoSQL databases often sacrifice ACID for availability and partition tolerance (BASE model)."
+  },
+  {
+    "id": "db-003",
+    "topic": "database",
+    "title": "SQL Joins",
+    "content": "INNER JOIN returns rows where both tables match. LEFT JOIN returns all left rows + matching right (NULL if no match). RIGHT JOIN is LEFT JOIN reversed. FULL OUTER JOIN returns all rows from both tables. CROSS JOIN returns cartesian product. Performance: ensure join columns are indexed. For large tables, hash join or merge join outperform nested loop join. Always filter before joining when possible."
+  },
+  {
+    "id": "general-001",
+    "topic": "general",
+    "title": "Time and Space Complexity",
+    "content": "Time complexity measures how runtime grows with input size. Space complexity measures memory usage. O(1) < O(log n) < O(n) < O(n log n) < O(n²) < O(2^n) < O(n!). Amortized analysis averages cost over a sequence of operations. Space-time tradeoff: use more memory to reduce time (memoization). Asymptotic analysis ignores constants and focuses on growth rate for large inputs."
+  },
+  {
+    "id": "general-002",
+    "topic": "general",
+    "title": "Object-Oriented Programming",
+    "content": "OOP organizes code around objects with state (attributes) and behavior (methods). Four pillars: Encapsulation (hide internal state), Inheritance (subclasses extend parents), Polymorphism (same interface, different behavior), Abstraction (expose only necessary interface). SOLID principles: Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion. Favor composition over inheritance for flexibility."
+  }
+]

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Observability Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; }
+
+    /* Header */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: #161b22; border-bottom: 1px solid #30363d; }
+    .header-title { font-size: 16px; font-weight: 600; color: #58a6ff; }
+    .header-title span { color: #8b949e; font-weight: 400; font-size: 12px; margin-left: 8px; }
+    .header-controls { display: flex; align-items: center; gap: 10px; }
+    .btn { padding: 5px 12px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #e6edf3; cursor: pointer; font-size: 12px; }
+    .btn:hover { background: #30363d; }
+    .btn.active { background: #1f6feb; border-color: #388bfd; }
+    #last-updated { color: #8b949e; font-size: 12px; }
+
+    /* Alert Banner */
+    .alerts-container { padding: 0 20px; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .alert-banner { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+    .alert-banner.p1 { background: rgba(248, 81, 73, 0.15); border: 1px solid #f85149; color: #f85149; }
+    .alert-banner.p2 { background: rgba(210, 153, 34, 0.15); border: 1px solid #d29922; color: #d29922; }
+    .alert-banner .dismiss { cursor: pointer; opacity: 0.7; margin-left: 12px; }
+    .alert-banner .dismiss:hover { opacity: 1; }
+    .alert-banner.ok-banner { background: rgba(63,185,80,0.10); border: 1px solid #3fb950; color: #3fb950; }
+
+    /* SLO Status Row */
+    .slo-row { display: flex; gap: 10px; padding: 10px 20px; }
+    .slo-card { flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; }
+    .slo-card .label { color: #8b949e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .slo-card .value { font-size: 22px; font-weight: 700; margin: 4px 0 2px; }
+    .slo-card .sub { font-size: 11px; color: #8b949e; }
+    .ok { color: #3fb950; }
+    .warn { color: #d29922; }
+    .bad { color: #f85149; }
+
+    /* Chart Grid */
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 10px 20px 20px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .chart-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+    .chart-title { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .chart-wrap { position: relative; height: 180px; }
+
+    /* Footer */
+    .footer { text-align: center; padding: 10px; color: #8b949e; font-size: 11px; border-top: 1px solid #30363d; }
+    .no-data { display: flex; align-items: center; justify-content: center; height: 100%; color: #8b949e; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Observability Dashboard <span>Study Assistant · gpt-4o-mini</span></div>
+  </div>
+  <div class="header-controls">
+    <span id="last-updated">Never updated</span>
+    <button class="btn active" id="btn-autorefresh" onclick="toggleAutoRefresh()">Auto-refresh ON</button>
+    <button class="btn" onclick="fetchAndUpdate()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="alerts-container" id="alerts-container"></div>
+
+<div class="slo-row">
+  <div class="slo-card"><div class="label">Latency P95</div><div class="value" id="slo-latency">—</div><div class="sub">SLO: &lt; 8000 ms</div></div>
+  <div class="slo-card"><div class="label">Error Rate</div><div class="value" id="slo-errors">—</div><div class="sub">SLO: &lt; 2%</div></div>
+  <div class="slo-card"><div class="label">Total Cost</div><div class="value" id="slo-cost">—</div><div class="sub">Budget: $1.00 / day</div></div>
+  <div class="slo-card"><div class="label">Quality Avg</div><div class="value" id="slo-quality">—</div><div class="sub">SLO: &gt; 0.70</div></div>
+  <div class="slo-card"><div class="label">Total Requests</div><div class="value" id="slo-traffic">—</div><div class="sub">Cumulative</div></div>
+</div>
+
+<div class="grid">
+  <div class="chart-card">
+    <div class="chart-title">Latency (ms) · P50 / P95 / P99</div>
+    <div class="chart-wrap"><canvas id="chart-latency"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Traffic · Requests per Window</div>
+    <div class="chart-wrap"><canvas id="chart-traffic"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Error Rate (%)</div>
+    <div class="chart-wrap"><canvas id="chart-errors"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Cost per Request (USD)</div>
+    <div class="chart-wrap"><canvas id="chart-cost"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Tokens · Input vs Output per Window</div>
+    <div class="chart-wrap"><canvas id="chart-tokens"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Quality Score · Average</div>
+    <div class="chart-wrap"><canvas id="chart-quality"></canvas></div>
+  </div>
+</div>
+
+<div class="footer">Day 13 Observability Lab · VinUni · Data refreshes every 20s · Last 30 snapshots shown</div>
+
+<script>
+const SLO = { latency_p95: 8000, error_rate: 2, daily_cost: 1.00, quality: 0.70 };
+const ALERT_THRESHOLDS = { latency_p95: 8000, error_rate: 5, cost_total: 0.50 };
+
+const CHART_DEFAULTS = {
+  animation: false,
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 12 } } },
+  scales: {
+    x: { ticks: { color: '#8b949e', maxTicksLimit: 6, font: { size: 10 } }, grid: { color: '#21262d' } },
+    y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' } },
+  }
+};
+
+function makeChart(id, type, datasets, yOptions = {}) {
+  const { ticks: extraTicks = {}, ...restYOptions } = yOptions;
+  const ctx = document.getElementById(id).getContext('2d');
+  return new Chart(ctx, {
+    type,
+    data: { labels: [], datasets },
+    options: {
+      ...JSON.parse(JSON.stringify(CHART_DEFAULTS)),
+      scales: {
+        x: { ...CHART_DEFAULTS.scales.x },
+        y: {
+          ticks: { color: '#8b949e', font: { size: 10 }, ...extraTicks },
+          grid: { color: '#21262d' },
+          ...restYOptions,
+        },
+      },
+    },
+  });
+}
+
+const charts = {
+  latency: makeChart('chart-latency', 'line', [
+    { label: 'P50', data: [], borderColor: '#3fb950', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2 },
+    { label: 'P95', data: [], borderColor: '#58a6ff', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2 },
+    { label: 'P99', data: [], borderColor: '#bc8cff', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2 },
+    { label: `SLO (${SLO.latency_p95}ms)`, data: [], borderColor: '#d29922', borderDash: [6, 3], pointRadius: 0, borderWidth: 1.5 },
+  ]),
+
+  traffic: makeChart('chart-traffic', 'bar', [
+    { label: 'Requests', data: [], backgroundColor: 'rgba(88,166,255,0.6)', borderColor: '#58a6ff', borderWidth: 1 },
+  ]),
+
+  errors: makeChart('chart-errors', 'line', [
+    { label: 'Error Rate %', data: [], borderColor: '#f85149', backgroundColor: 'rgba(248,81,73,0.1)', fill: true, tension: 0.3, pointRadius: 2 },
+    { label: `SLO (${SLO.error_rate}%)`, data: [], borderColor: '#d29922', borderDash: [6, 3], pointRadius: 0, borderWidth: 1.5 },
+  ]),
+
+  cost: makeChart('chart-cost', 'bar', [
+    { label: 'Cost / request ($)', data: [], backgroundColor: 'rgba(63,185,80,0.6)', borderColor: '#3fb950', borderWidth: 1 },
+  ], {
+    ticks: { callback: v => '$' + Number(v).toFixed(5) },
+  }),
+
+  tokens: makeChart('chart-tokens', 'bar', [
+    { label: 'Input Tokens', data: [], backgroundColor: 'rgba(88,166,255,0.7)', stack: 'tokens' },
+    { label: 'Output Tokens', data: [], backgroundColor: 'rgba(188,140,255,0.7)', stack: 'tokens' },
+  ]),
+
+  quality: makeChart('chart-quality', 'line', [
+    { label: 'Quality Avg', data: [], borderColor: '#3fb950', backgroundColor: 'rgba(63,185,80,0.1)', fill: true, tension: 0.3, pointRadius: 2 },
+    { label: `SLO (${SLO.quality})`, data: [], borderColor: '#d29922', borderDash: [6, 3], pointRadius: 0, borderWidth: 1.5 },
+  ], { min: 0, max: 1 }),
+};
+
+const dismissedAlerts = new Set();
+
+function renderAlerts(latest) {
+  const container = document.getElementById('alerts-container');
+  const active = [];
+
+  if (latest.latency_p95 > ALERT_THRESHOLDS.latency_p95)
+    active.push({ key: 'latency', sev: 'p2', msg: `⚠ P2 · High Latency P95: ${latest.latency_p95.toFixed(0)} ms > ${ALERT_THRESHOLDS.latency_p95} ms` });
+  if (latest.error_rate_pct > ALERT_THRESHOLDS.error_rate)
+    active.push({ key: 'errors', sev: 'p1', msg: `🔴 P1 · High Error Rate: ${latest.error_rate_pct.toFixed(1)}% > ${ALERT_THRESHOLDS.error_rate}%` });
+  if (latest.cost_total_usd > ALERT_THRESHOLDS.cost_total)
+    active.push({ key: 'cost', sev: 'p2', msg: `⚠ P2 · Cost Budget Spike: $${latest.cost_total_usd.toFixed(4)} > $${ALERT_THRESHOLDS.cost_total}` });
+  if (latest.quality_avg < SLO.quality && latest.traffic_total > 0)
+    active.push({ key: 'quality', sev: 'p2', msg: `⚠ P2 · Quality Below SLO: ${latest.quality_avg.toFixed(2)} < ${SLO.quality}` });
+
+  // Clear dismissed state for alerts that are no longer firing
+  const activeKeys = new Set(active.map(a => a.key));
+  for (const k of dismissedAlerts) { if (!activeKeys.has(k)) dismissedAlerts.delete(k); }
+
+  const firing = active.filter(a => !dismissedAlerts.has(a.key));
+
+  if (firing.length === 0) {
+    container.innerHTML = `<div class="alert-banner ok-banner">✅ All systems nominal — no active alerts</div>`;
+  } else {
+    container.innerHTML = firing
+      .map(a => `<div class="alert-banner ${a.sev}">${a.msg}<span class="dismiss" onclick="dismissedAlerts.add('${a.key}');this.parentElement.remove()">✕</span></div>`)
+      .join('');
+  }
+}
+
+function updateSloCards(latest) {
+  const lat = latest.latency_p95;
+  const err = latest.error_rate_pct;
+  const cost = latest.cost_total_usd;
+  const qual = latest.quality_avg;
+
+  const el = (id, val, cls) => {
+    const e = document.getElementById(id);
+    e.textContent = val;
+    e.className = `value ${cls}`;
+  };
+
+  el('slo-latency', `${lat.toFixed(0)} ms`, lat <= SLO.latency_p95 ? 'ok' : lat <= ALERT_THRESHOLDS.latency_p95 ? 'warn' : 'bad');
+  el('slo-errors', `${err.toFixed(2)}%`, err <= SLO.error_rate ? 'ok' : err <= ALERT_THRESHOLDS.error_rate ? 'warn' : 'bad');
+  el('slo-cost', `$${cost.toFixed(4)}`, cost <= SLO.daily_cost * 0.5 ? 'ok' : cost <= SLO.daily_cost ? 'warn' : 'bad');
+  el('slo-quality', qual.toFixed(2), qual >= SLO.quality ? 'ok' : qual >= SLO.quality * 0.9 ? 'warn' : 'bad');
+  document.getElementById('slo-traffic').textContent = latest.traffic_total;
+  document.getElementById('slo-traffic').className = 'value';
+}
+
+function updateChart(chart, labels, ...seriesData) {
+  chart.data.labels = labels;
+  seriesData.forEach((data, i) => { chart.data.datasets[i].data = data; });
+  chart.update('none');
+}
+
+async function fetchAndUpdate() {
+  try {
+    const res = await fetch('/metrics/history');
+    if (!res.ok) return;
+    const history = await res.json();
+
+    if (history.length === 0) {
+      document.getElementById('last-updated').textContent = 'No data yet — send requests first';
+      return;
+    }
+
+    const recent = history.slice(-30);
+    const labels = recent.map(s => new Date(s.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    const n = labels.length;
+    const sloLatency = Array(n).fill(SLO.latency_p95);
+    const sloError   = Array(n).fill(SLO.error_rate);
+    const sloQuality = Array(n).fill(SLO.quality);
+
+    updateChart(charts.latency, labels,
+      recent.map(s => s.latency_p50),
+      recent.map(s => s.latency_p95),
+      recent.map(s => s.latency_p99),
+      sloLatency
+    );
+    updateChart(charts.traffic, labels, recent.map(s => s.traffic_window));
+    updateChart(charts.errors,  labels, recent.map(s => s.error_rate_pct), sloError);
+    updateChart(charts.cost,    labels, recent.map(s => s.cost_window_usd));
+    updateChart(charts.tokens,  labels, recent.map(s => s.tokens_in_window), recent.map(s => s.tokens_out_window));
+    updateChart(charts.quality, labels, recent.map(s => s.quality_avg), sloQuality);
+
+    const latest = history[history.length - 1];
+    renderAlerts(latest);
+    updateSloCards(latest);
+    document.getElementById('last-updated').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+  } catch (e) {
+    document.getElementById('last-updated').textContent = `Error: ${e.message}`;
+  }
+}
+
+let autoRefreshTimer = null;
+let autoRefreshOn = true;
+
+function toggleAutoRefresh() {
+  autoRefreshOn = !autoRefreshOn;
+  const btn = document.getElementById('btn-autorefresh');
+  if (autoRefreshOn) {
+    btn.textContent = 'Auto-refresh ON';
+    btn.classList.add('active');
+    scheduleRefresh();
+  } else {
+    btn.textContent = 'Auto-refresh OFF';
+    btn.classList.remove('active');
+    clearTimeout(autoRefreshTimer);
+  }
+}
+
+function scheduleRefresh() {
+  if (!autoRefreshOn) return;
+  autoRefreshTimer = setTimeout(async () => {
+    await fetchAndUpdate();
+    scheduleRefresh();
+  }, 20000);
+}
+
+fetchAndUpdate();
+scheduleRefresh();
+</script>
+</body>
+</html>

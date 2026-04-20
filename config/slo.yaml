@@ -2,15 +2,16 @@ service: day13-observability-lab
 window: 28d
 slis:
   latency_p95_ms:
-    objective: 3000
+    objective: 8000
     target: 99.5
-    note: Replace with your group's target
+    note: gpt-4o-mini typical call 2-5s, P95 budget 8s
   error_rate_pct:
     objective: 2
     target: 99.0
   daily_cost_usd:
-    objective: 2.5
+    objective: 1.00
     target: 100.0
+    note: gpt-4o-mini $0.15/1M input, $0.60/1M output
   quality_score_avg:
-    objective: 0.75
+    objective: 0.70
     target: 95.0

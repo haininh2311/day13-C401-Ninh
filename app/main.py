@@ -5,23 +5,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from structlog.contextvars import bind_contextvars
 
 from .agent import LabAgent
 from .incidents import disable, enable, status
 from .logging_config import configure_logging, get_logger
-from .metrics import record_error, snapshot
+from .metrics import HISTORY, record_error, snapshot
 from .middleware import CorrelationIdMiddleware
 from .pii import hash_user_id, summarize_text
 from .schemas import ChatRequest, ChatResponse
-from .tracing import tracing_enabled
+from .tracing import langfuse_context, tracing_enabled
+
+STATIC_DIR = Path(__file__).parent / "static"
+STATIC_DIR.mkdir(exist_ok=True)
 
 configure_logging()
 log = get_logger()
 app = FastAPI(title="Day 13 Observability Lab")
 app.add_middleware(CorrelationIdMiddleware)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 agent = LabAgent()
 
 
@@ -45,13 +52,23 @@ async def metrics() -> dict:
     return snapshot()
 
 
+@app.get("/metrics/history")
+async def metrics_history() -> list:
+    return list(HISTORY)
+
+
+@app.get("/dashboard", response_class=FileResponse)
+async def dashboard() -> FileResponse:
+    return FileResponse(str(STATIC_DIR / "dashboard.html"))
+
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: Request, body: ChatRequest) -> ChatResponse:
     bind_contextvars(
         user_id_hash=hash_user_id(body.user_id),
         session_id=body.session_id,
         feature=body.feature,
-        model="claude-sonnet-4-5",
+        model="gpt-4o-mini",
         env=os.getenv("APP_ENV", "dev"),
     )
     
@@ -76,6 +93,7 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponse:
             cost_usd=result.cost_usd,
             payload={"answer_preview": summarize_text(result.answer)},
         )
+        langfuse_context.flush()
         return ChatResponse(
             answer=result.answer,
             correlation_id=request.state.correlation_id,
